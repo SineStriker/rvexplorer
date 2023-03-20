@@ -60,6 +60,9 @@ void Generator::generate() {
     fprintf(fp, "switch (PC) {\\\n");
     for (int i = 0; i < image_size; i += 4) {
         uint32_t tmp = MINIRV32_RAM_IMAGE_OFFSET + i;
+        if (MINIRV32_LOAD4(i) == 0) {
+            break;
+        }
         fprintf(fp,
                 "    case 0x%x:\\\n"
                 "        goto lab_%s;\\\n"
@@ -82,6 +85,9 @@ void Generator::generate() {
         }
 
         uint32_t ir = MINIRV32_LOAD4(ofs_pc);
+        if (ir == 0) {
+            break;
+        }
 
         // Add block start
         fprintf(fp, "lab_%s: {\n", dec2hex(pc).data());

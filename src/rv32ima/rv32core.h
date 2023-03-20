@@ -2,7 +2,7 @@
 #define RV32CORE_H
 
 #include <cstdint>
-#include <memory>
+#include <cstring>
 
 
 struct RV32Core {

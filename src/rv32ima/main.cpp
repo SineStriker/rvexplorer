@@ -1,3 +1,4 @@
+#include <cstring>
 #include <iostream>
 
 #include "rv32core.h"
@@ -13,19 +14,27 @@ extern int run(RV32Core &core);
 
 static void DumpState(RV32Core *core, uint8_t *ram_image);
 
+static uint64_t GetTimeMicroseconds();
+
 int main(int argc, char *argv[]) {
     // Allocate image space
     image = new uint8_t[ram_amt];
     memcpy(image, binary_data, sizeof(binary_data));
 
     RV32Core core;
+
+    auto time1 = GetTimeMicroseconds();
     int ret = run(core);
+    auto time2 = GetTimeMicroseconds();
+
     std::cout << ret << std::endl;
 
     // Remove image
     delete[] image;
 
     DumpState(&core, image);
+
+    std::cout << "timeout: " << time2 - time1 << std::endl;
     return 0;
 }
 
@@ -50,3 +59,31 @@ static void DumpState(RV32Core *core, uint8_t *ram_image) {
            regs[16], regs[17], regs[18], regs[19], regs[20], regs[21], regs[22], regs[23], regs[24], regs[25], regs[26],
            regs[27], regs[28], regs[29], regs[30], regs[31]);
 }
+
+#if defined(WINDOWS) || defined(WIN32) || defined(_WIN32)
+
+#    include <conio.h>
+#    include <windows.h>
+
+uint64_t GetTimeMicroseconds() {
+    static LARGE_INTEGER lpf;
+    LARGE_INTEGER li;
+
+    if (!lpf.QuadPart)
+        QueryPerformanceFrequency(&lpf);
+
+    QueryPerformanceCounter(&li);
+    return ((uint64_t) li.QuadPart * 1000000LL) / (uint64_t) lpf.QuadPart;
+}
+
+#else
+
+#    include <sys/time.h>
+
+static uint64_t GetTimeMicroseconds() {
+    struct timeval tv;
+    gettimeofday(&tv, 0);
+    return tv.tv_usec + ((uint64_t) (tv.tv_sec)) * 1000000LL;
+}
+
+#endif
