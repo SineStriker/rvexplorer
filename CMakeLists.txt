@@ -14,6 +14,8 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     endif()
 endif()
 
-set(RV32IMA_BINARY_FILE "/home/riscv/VSCodeProjects/mini-rv32ima/baremetal2/baremetal.bin")
+if(NOT DEFINED RV32IMA_BINARY_FILE)
+    set(RV32IMA_BINARY_FILE "C:/Users/truef/Desktop/baremetal2/baremetal.bin")
+endif()
 
 add_subdirectory(src)

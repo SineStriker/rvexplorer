@@ -4,9 +4,9 @@
 #include <string>
 
 static std::string dec2hex(uint32_t i, size_t width = 8) {
-    std::stringstream ioss; // 定义字符串流
-    std::string s_temp;     // 存放转化后字符
-    ioss << std::hex << i;  // 以十六制形式输出
+    std::stringstream ioss;                                                // 定义字符串流
+    std::string s_temp;                                                    // 存放转化后字符
+    ioss << std::hex << i;                                                 // 以十六制形式输出
     ioss >> s_temp;
     std::string s(width > s_temp.size() ? width - s_temp.size() : 0, '0'); // 补0
     s += s_temp;                                                           // 合并
@@ -56,22 +56,33 @@ void Generator::generate() {
     fprintf(fp, "int run(RV32Core &core) {\n\n");
 
     // Jump table
-    fprintf(fp, "#define CREATE_JUMP_TABLE(PC) \\\n");
-    fprintf(fp, "switch (PC) {\\\n");
+    // fprintf(fp, "#define CREATE_JUMP_TABLE(PC) \\\n");
+    // fprintf(fp, "switch (PC) {\\\n");
+    // for (int i = 0; i < image_size; i += 4) {
+    //     uint32_t tmp = MINIRV32_RAM_IMAGE_OFFSET + i;
+    //     if (MINIRV32_LOAD4(i) == 0) {
+    //         break;
+    //     }
+    //     fprintf(fp,
+    //             "    case 0x%x:\\\n"
+    //             "        goto lab_%s;\\\n"
+    //             "        break;\\\n",
+    //             tmp, dec2hex(tmp).data());
+    // }
+    // fprintf(fp, "    default:\\\n"
+    //             "        break;\\\n"
+    //             "}\n\n");
+
+    // Jump table
+    fprintf(fp, "static void *jump_table[] = {\n");
     for (int i = 0; i < image_size; i += 4) {
         uint32_t tmp = MINIRV32_RAM_IMAGE_OFFSET + i;
         if (MINIRV32_LOAD4(i) == 0) {
             break;
         }
-        fprintf(fp,
-                "    case 0x%x:\\\n"
-                "        goto lab_%s;\\\n"
-                "        break;\\\n",
-                tmp, dec2hex(tmp).data());
+        fprintf(fp, "    &&lab_%s,\n", dec2hex(tmp).data());
     }
-    fprintf(fp, "    default:\\\n"
-                "        break;\\\n"
-                "}\n\n");
+    fprintf(fp, "};\n\n");
 
     while (true) {
         std::string if_jump;
@@ -760,7 +771,8 @@ void Generator::generate() {
         if (jal_pc) {
             fprintf(fp, "%sgoto lab_%s;\n", if_jump.data(), dec2hex(jal_pc + 4).data());
         } else if (jalr) {
-            fprintf(fp, "CREATE_JUMP_TABLE(pc)\n");
+            // fprintf(fp, "CREATE_JUMP_TABLE(pc)\n");
+            fprintf(fp, "goto *jump_table[(pc - MINIRV32_RAM_IMAGE_OFFSET) / 4];\n");
         }
 
         // Write block end
